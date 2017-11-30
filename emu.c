@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
+#include<stdint.h>
 #include<string.h>
 
 //Flags
@@ -31,18 +32,38 @@ uint8_t int_enable;
 void TrovaLavoro(State8080* state)
 {
 	//You fucked up
-	printf ("Error: Unimplemented istruction\n;");
+	printf ("Error: Unimplemented istruction!\n;");
 	exit(1);
 }
 
 void Emulatore8080p(State8080* state)
 {
-	return;
+	uint8_t *opcode = &state->memory[state->pc];
+
+	switch(*opcode)
+	{
+		case 0x00:
+			{
+				//printf("NOP\n");
+			       	break; //NOP
+			}
+		case 0x01:
+			{
+				state->c = opcode[1];
+				state->b = opcode[2];
+				state->pc+=2;
+				break;
+			}
+		default: TrovaLavoro(state);
+	}
+	state->pc+=1;
 }
 
 
 int main(int argc, char**argv)
 {
+	State8080* state = (State8080*)malloc(sizeof(State8080));
+	state->pc=0;
 	FILE *f= fopen(argv[1],"rb");
 	if(f==NULL)
 	{
@@ -58,5 +79,14 @@ int main(int argc, char**argv)
 	uint8_t *buffer=malloc(fsize);
 	fread(buffer,fsize,1,f);
 	fclose(f);
+	int i=0;
+	state->memory = buffer;
+	while(i<10)
+	{
+		
+		Emulatore8080p(state);
+		i++;
+	}
+
 	return 0;
 }
