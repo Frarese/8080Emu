@@ -193,6 +193,21 @@ void Emulatore8080p(State8080* state)
 			   state->sp = (state->sp<<8) | (opcode[1]);
 			   state->pc = state->pc+2;
 			   break;
+		case 0x32: offset = opcode[2];
+			   offset = (offset<<8) | (opcode[1]);
+			   state->memory[offset]= state->a;
+			   state->pc = state->pc+2;
+			   break;
+		case 0x36: 
+			   offset = (state->h <<8) | (state->l);
+			   state->memory[offset] = opcode[1];
+			   state->pc++;
+			   break;
+		case 0x3a: offset = opcode[2];
+			   offset = (offset<<8) | (opcode[1]);
+			   state->a = state->memory[offset];
+			   state->pc= state->pc +2;
+			   break;
 
 
 		default: TrovaLavoro(state);
