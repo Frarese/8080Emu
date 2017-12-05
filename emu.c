@@ -34,6 +34,7 @@ void TrovaLavoro(State8080* state)
 {
 	//You fucked up
 	printf ("Error: Unimplemented istruction!\n");
+	printf("Instruction: %i\n",state->pc);
 	exit(1);
 }
 
@@ -44,7 +45,9 @@ int Parity(int a)
 void Emulatore8080p(State8080* state)
 {
 	uint8_t *opcode = &state->memory[state->pc];
-	uint16_t answer;
+	uint16_t answer, op, offset;
+	uint32_t op1,op2;
+	uint8_t b0;
 
 	switch(*opcode)
 	{
@@ -64,13 +67,13 @@ void Emulatore8080p(State8080* state)
 		case 0x04: answer = (uint16_t) state->b++;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   state->cc.cy =(answer >0xff);
+			  // state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);
 			   break;
 		case 0x05: answer = (uint16_t) state->b--;
 		  	   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   state->cc.cy =(answer >0xff);
+			   // state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);
 			   break;
 		case 0x06: state->b = opcode[1];
@@ -78,25 +81,117 @@ void Emulatore8080p(State8080* state)
 			   break;
 		case 0x07: TrovaLavoro(state); break;
 		case 0x08: break;
-		case 0x09: TrovaLavoro(state); break;
+		case 0x09: 
+			   op1 = (state->h<<8) | (state->l);
+			   op2 = (state->b<<8) | (state->c);
+			   op1 = op1 + op2;
+			   if(op1>0xffff)
+				   state->cc.cy=1;
+			   else
+				   state->cc.cy=0;
+			   state->h = op1 & 0xff;
+			   state->l = (op1>>8);
+			   break;
+
 		case 0x0a: TrovaLavoro(state); break;
 		case 0x0b: TrovaLavoro(state); break;
 		case 0x0c:
 			   answer = (uint16_t) state->c++;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   state->cc.cy =(answer >0xff);
+			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);
 			   break;
 		case 0x0d:
 			   answer = (uint16_t) state->c--;
 		  	   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   state->cc.cy =(answer >0xff);
+			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);
 			   break;
 		case 0x0e: state->c = opcode[1];
 			   state->pc++;
+			   break;
+		case 0x0f: 
+			   b0 = (state->a &0x01);
+			   if(b0==0x01)
+				   state->cc.cy=1;
+			   else
+				   state->cc.cy=0;
+			   b0 = (b0<<7);
+			   state->a = (state->a >>1) + b0;
+			   break;
+			   
+		case 0x10: break;
+		case 0x11:
+				state->e = opcode[1];
+				state->d = opcode[2];
+				state->pc+=2;
+				break;
+		case 0x12: TrovaLavoro(state); break;
+		case 0x13: TrovaLavoro(state); break;
+		case 0x14: 
+			   answer = (uint16_t) state->d++;
+			   state->cc.z =((answer & 0xff)== 0);
+			   state->cc.s = ((answer & 0x80)!= 0);
+			   //state->cc.cy =(answer >0xff);
+			   state->cc.p = Parity(answer & 0xff);
+			   break;
+		case 0x15: 
+			   answer = (uint16_t) state->d--;
+			   state->cc.z =((answer & 0xff)== 0);
+			   state->cc.s = ((answer & 0x80)!= 0);
+			   //state->cc.cy =(answer >0xff);
+			   state->cc.p = Parity(answer & 0xff);
+			   break;
+		case 0x16: state->d = opcode[1];
+			   state->pc++;
+			   break;
+		case 0x17: TrovaLavoro(state); break;
+		case 0x18: break;
+		case 0x19: 
+			   op1 = (state->h<<8) | (state->l);
+			   op2 = (state->d<<8) | (state->e);
+			   op1 = op1 + op2;
+			   if(op1>0xffff)
+				   state->cc.cy=1;
+			   else
+				   state->cc.cy=0;
+			   state->h = op1 & 0xff;
+			   state->l = (op1>>8);
+			   break;
+		case 0x1a:
+			   offset = (state->d <<8) | (state->e);
+			   state->a = state->memory[offset];
+			   break;
+		case 0x21:
+   			   state->l = opcode[1];
+   			   state->h = opcode[2];
+   			   state->pc+=2;
+   			   break;
+		case 0x23: op = (state->h <<8) | (state->l);
+			   op++;
+			   state->h = op & 0xff;
+			   state->l = (op>>8);
+			   break;
+		case 0x26: state->h = opcode[1];
+			   state->pc++;
+			   break;
+		case 0x29: 
+			   op1 = (state->h<<8) | (state->l);
+			   op2 = (state->h<<8) | (state->l);
+			   op1 = op1 + op2;
+			   if(op1>0xffff)
+				   state->cc.cy=1;
+			   else
+				   state->cc.cy=0;
+			   state->h = op1 & 0xff;
+			   state->l = (op1>>8);
+			   break;
+		case 0x31:
+			   state->sp = opcode[2];
+			   state->sp = (state->sp<<8) | (opcode[1]);
+			   state->pc = state->pc+2;
 			   break;
 
 

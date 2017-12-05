@@ -1,2 +1,3 @@
 # 8080Emu
-An 8080 processor emulator for learning purposes
+Basic emulator I wrote for learning basic emulation
+It works with space inavders!
