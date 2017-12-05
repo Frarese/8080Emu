@@ -34,7 +34,8 @@ void TrovaLavoro(State8080* state)
 {
 	//You fucked up
 	printf ("Error: Unimplemented istruction!\n");
-	printf("Instruction: %i\n",state->pc);
+	printf("Instruction's line: %i\n",state->pc);
+	printf("op: %i",state->memory[state->pc]);
 	exit(1);
 }
 
@@ -129,7 +130,12 @@ void Emulatore8080p(State8080* state)
 				state->pc+=2;
 				break;
 		case 0x12: TrovaLavoro(state); break;
-		case 0x13: TrovaLavoro(state); break;
+		case 0x13: op = (state->d <<8) | (state->e);
+			   op++;
+			   state->d = op & 0xff;
+			   state->e = (op>>8);
+			   break;
+
 		case 0x14: 
 			   answer = (uint16_t) state->d++;
 			   state->cc.z =((answer & 0xff)== 0);
@@ -257,11 +263,47 @@ void Emulatore8080p(State8080* state)
 			   state->cc.cy =(state->a >0xff);
 			   state->cc.p = Parity(state->a & 0xff);
 			   break;
-		case 0xc1: break;
+		case 0xc1: 
+			   state->c = state->memory[state->sp];
+			   state->b = state->memory[state->sp+1];
+			   state->sp +=2;
+			   break;
+		case 0xc2: 
+			   if(state->cc.z == 0)
+				   state->pc = (opcode[2]<<8) | opcode[1];
+			   state->pc +=2;
+			   break;
+		case 0xc3: 
+			   state->pc = (opcode[2]<<8) | opcode[1];
+			   break;
+		case 0xc5:
+			   state->memory[state->sp-1] = state->b;
+			   state->memory[state->sp-2] = state->c;
+			   state->sp = state->sp-2;
+			   break;
+		case 0xc6: 
+			  state->a = state->a + opcode[1];
+			  state->pc++;
+			  break;
+		case 0xc9: 
+			  state->pc = (state->memory[state->sp+1]<<8) | state->memory[state->sp];
+			  state->sp +=2;
+			  break;
+		case 0xcd: 
+			  state->memory[state->sp-1] = (state->pc>>8);
+			  state->memory[state->sp-2] = (state->pc & 0xff);
+			  state->sp +=2;
+			  state->pc = (opcode[2]<<8) | opcode[1];
+			  break;
+		case 0xd1: 
+			   state->e = state->memory[state->sp];
+			   state->d = state->memory[state->sp+1];
+			   state->sp +=2;
+			   break;
+		case 0xd3: break;
 
 
-
-		default: TrovaLavoro(state);
+	//	default: TrovaLavoro(state);
 	}
 	state->pc+=1;
 }
@@ -271,6 +313,7 @@ int main(int argc, char**argv)
 {
 	State8080* state = (State8080*)malloc(sizeof(State8080));
 	state->pc=0;
+	state->sp= 0x23ff;
 	FILE *f= fopen(argv[1],"rb");
 	if(f==NULL)
 	{
@@ -288,7 +331,7 @@ int main(int argc, char**argv)
 	fclose(f);
 	int i=0;
 	state->memory = buffer;
-	while(i<10)
+	while(1)
 	{
 		
 		Emulatore8080p(state);
