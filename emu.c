@@ -208,6 +208,57 @@ void Emulatore8080p(State8080* state)
 			   state->a = state->memory[offset];
 			   state->pc= state->pc +2;
 			   break;
+		case 0x3e: state->a = opcode[1];
+			   state->pc++;
+			   break;
+		case 0x56:
+ 			   offset = (state->h <<8) | (state->l);
+			   state->d = state->memory[offset];
+			   break;
+		case 0x5e: 
+ 			   offset = (state->h <<8) | (state->l);
+			   state->e = state->memory[offset];
+			   break;
+		case 0x66:
+ 			   offset = (state->h <<8) | (state->l);
+			   state->h = state->memory[offset];
+			   break;
+		case 0x6f: 
+			   state->l = state->a;
+			   break;
+		case 0x77: 
+ 			   offset = (state->h <<8) | (state->l);
+			   state->memory[offset]= state->a;
+			   break;
+		case 0x7a: 
+			   state->a = state->d;
+			   break;
+		case 0x7b: 
+			   state->a = state->e;
+			   break;
+		case 0x7c: 
+			   state->a = state->h;
+			   break;
+		case 0x7e: 
+ 			   offset = (state->h <<8) | (state->l);
+			   state->a = state->memory[offset];
+			   break;
+		case 0xa7: 
+			   state->a = (state->a) & (state->a);
+			   state->cc.z =((state->a & 0xff)== 0);
+			   state->cc.s = ((state->a & 0x80)!= 0);
+			   state->cc.cy =(state->a >0xff);
+			   state->cc.p = Parity(state->a & 0xff);
+			   break;
+		case 0xaf: 
+			   state->a = (state->a) ^ (state->a);
+			   state->cc.z =((state->a & 0xff)== 0);
+			   state->cc.s = ((state->a & 0x80)!= 0);
+			   state->cc.cy =(state->a >0xff);
+			   state->cc.p = Parity(state->a & 0xff);
+			   break;
+		case 0xc1: break;
+
 
 
 		default: TrovaLavoro(state);
