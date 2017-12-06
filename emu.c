@@ -121,13 +121,9 @@ void Emulatore8080p(State8080* state)
 			   state->pc++;
 			   break;
 		case 0x0f: 
-			   {uint8_t b0 = (state->a &0x01);
-			   if(b0==0x01)
-				   state->cc.cy=1;
-			   else
-				   state->cc.cy=0;
-			   b0 = (b0<<7);
-			   state->a = (state->a >>1) + b0;}
+			   {uint8_t x = state->a;
+			   state->a=((x&1)<<7)| (x>>1);
+			   state->cc.cy =(1==(x&1));}
 			   break;
 			   
 		case 0x10: break;
@@ -291,9 +287,15 @@ void Emulatore8080p(State8080* state)
 			   state->sp = state->sp-2;
 			   break;
 		case 0xc6: 
-			  state->a = state->a + opcode[1];
-			  state->pc++;
-			  break;
+			{
+				uint16_t x = (uint16_t) state->a + (uint16_t) opcode[1];
+				state->cc.z = ((x & 0xff)==0);
+				state->cc.s = ((x & 0x80)==0x80);
+				state->cc.p = Parity(x & 0xff);
+				state->cc.cy = (x > 0xff);
+			 	state->a = (uint8_t) x;
+				state->pc++;
+			}
 		case 0xc9: 
 			  state->pc = (state->memory[state->sp+1]<<8) | state->memory[state->sp];
 			  state->sp +=2;
@@ -344,8 +346,29 @@ void Emulatore8080p(State8080* state)
 			   state->e = t2;
 			   }
 			   break;
-		case 0xf1: break;
-		case 0xf5: break;
+		case 0xf1: {
+			   	state->a = state->memory[state->sp+1];
+				uint8_t psw = state->memory[state->sp];
+				state->cc.z= (0x01 == (psw&0x01));
+				state->cc.s= (0x02 == (psw&0x02));
+				state->cc.p= (0x04 == (psw&0x04));
+				state->cc.cy= (0x05 == (psw&0x08));
+				state->cc.ac= (0x10 == (psw&0x10));
+				state->sp +=2;
+			   }
+			   break;
+		case 0xf5:{
+			  	state->memory[state->sp-1] = state->a;
+				uint8_t psw = (state->cc.z |
+					       	state->cc.s<<1 |
+					       	state->cc.p<<2 |
+					       	state->cc.cy << 3 |
+					       	state->cc.ac <<4);
+				state->memory[state->sp-2] = psw;
+				state->sp = state->sp -2;
+			  
+			  }
+			   break;
 		case 0xfb: break;
 		case 0xfe: 
 			   state->a = (state->a) - opcode[1];
@@ -416,7 +439,7 @@ int main(int argc, char**argv)
 	fclose(f);
 	int i=0;
 	state->memory = buffer;
-	while(i< 50000)
+	while(i< 150000)
 	{
 		Emulatore8080p(state);	
 	//	DebugEmu(state);
