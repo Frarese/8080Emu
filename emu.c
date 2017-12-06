@@ -295,12 +295,12 @@ void Emulatore8080p(State8080* state)
 			  state->pc++;
 			  break;
 		case 0xc9: 
-			  state->pc = (state->memory[state->sp+1]<<8) | state->memory[state->sp]-1;
+			  state->pc = (state->memory[state->sp+1]<<8) | state->memory[state->sp];
 			  state->sp +=2;
 			  break;
 		case 0xcd: 
 			  state->memory[state->sp-1] = (state->pc>>8);
-			  state->memory[state->sp-2] = (state->pc & 0xff);
+			  state->memory[state->sp-2] = ((state->pc +2) & 0xff);
 			  state->sp -=2;
 			  state->pc = ((opcode[2]<<8) | opcode[1]) -1;
 			  break;
@@ -416,12 +416,16 @@ int main(int argc, char**argv)
 	fclose(f);
 	int i=0;
 	state->memory = buffer;
-	while(i< 100003)
+	while(i< 50000)
 	{
-	//	Emulatore8080p(state);	
-		DebugEmu(state);
+		Emulatore8080p(state);	
+	//	DebugEmu(state);
 		i++;
 	}
-	printf("opcode: %#02x\n",state->memory[state->pc]);
+	while(1)
+	{
+		DebugEmu(state);	}
+	//printf("opcode: %#02x\n",state->memory[state->pc]);
+	printf("pc: %#04x\n", state->pc);
 	return 0;
 }
