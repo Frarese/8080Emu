@@ -52,8 +52,6 @@ void Emulatore8080p(State8080* state)
 	switch(*opcode)
 	{
 		case 0x00:
-			
-				//printf("NOP\n");
 			       	break; //NOP
 			
 		case 0x01:	
@@ -68,7 +66,6 @@ void Emulatore8080p(State8080* state)
 			   uint16_t answer = (uint16_t) state->b++;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			  // state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);
 			   }
 			   break;
@@ -77,7 +74,6 @@ void Emulatore8080p(State8080* state)
 			   state->b = answer;
 		  	   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   // state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);}
 			   break;
 		case 0x06: state->b = opcode[1];
@@ -106,7 +102,6 @@ void Emulatore8080p(State8080* state)
 			   uint16_t answer = (uint16_t) state->c++;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);}
 			   break;
 		case 0x0d:
@@ -114,7 +109,6 @@ void Emulatore8080p(State8080* state)
 			   state->c=answer;
 		  	   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);}
 			   break;
 		case 0x0e: state->c = opcode[1];
@@ -144,14 +138,12 @@ void Emulatore8080p(State8080* state)
 			   {uint16_t answer = (uint16_t) state->d++;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);}
 			   break;
 		case 0x15: 
 			   {uint16_t answer = (uint16_t) state->d--;
 			   state->cc.z =((answer & 0xff)== 0);
 			   state->cc.s = ((answer & 0x80)!= 0);
-			   //state->cc.cy =(answer >0xff);
 			   state->cc.p = Parity(answer & 0xff);}
 			   break;
 		case 0x16: state->d = opcode[1];
@@ -381,8 +373,8 @@ void Emulatore8080p(State8080* state)
 
 
 
-		default: TrovaLavoro(state);}
-		//printf("opcode: %#02x",state->memory[state->pc]);
+		default: TrovaLavoro(state);
+	}
 		state->pc+=1;
 }
 
@@ -406,6 +398,7 @@ void DebugEmu(State8080 * state)
 	printf("sp: %#04x\n",state->sp);
 	printf("flags: %i %i %i %i %i %i\n",state->cc.z,state->cc.s,state->cc.p,state->cc.cy,state->cc.ac,state->cc.pad);
 }
+
 
 
 int main(int argc, char**argv)
@@ -434,21 +427,27 @@ int main(int argc, char**argv)
 	int fsize = ftell(f);
 	fseek(f, 0L, SEEK_SET);
 	
-	uint8_t *buffer=malloc(fsize);
-	fread(buffer,fsize,1,f);
+	state->memory = malloc(0x10000);
+	fread(state->memory,fsize,1,f);
 	fclose(f);
 	int i=0;
-	state->memory = buffer;
-	while(i< 150000)
+	while(i==0)
 	{
-		Emulatore8080p(state);	
-	//	DebugEmu(state);
-		i++;
+		uint8_t opcode = state->memory[state->pc];
+		if(opcode == 0xdb)
+		{
+		//	uint8_t port = opcode[1];
+		//	state->a = MachineIN(state, port);
+		//	state->pc++;
+		}
+		else if (opcode == 0xd3)
+		{
+		//	uint8_t port = opcode[1];
+		//	MachineOUT(state, port);
+		//	state->pc++;
+		}
+		else
+			Emulatore8080p(state);
 	}
-	while(1)
-	{
-		DebugEmu(state);	}
-	//printf("opcode: %#02x\n",state->memory[state->pc]);
-	printf("pc: %#04x\n", state->pc);
 	return 0;
 }
